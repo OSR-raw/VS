@@ -14,7 +14,45 @@ KinectTool::KinectTool( float half_x, float half_y, float start_z, float end_z )
 	_start_z = start_z;
 	_end_z = end_z;
 	int start_d = 800;
-	_reader = new KinectReader(start_d, start_d+int(_start_z - _end_z)*3, _start_z - _end_z );
+	_reader = new KinectReader(start_d, start_d+int(_start_z - _end_z), _start_z - _end_z );
+	_tmp_blured_image = new float[640*480];
+	memset( _tmp_blured_image, 0, 640*480*sizeof(float) );
+}
+
+inline void Blur( float* in_out, float* tmp )
+{
+	static double coeffs[] = {0.0545, 0.224, 0.4026, 0.224, 0.0545};
+	double summ = 0;
+	//X
+
+	for ( int j = 2; j < 478; j++ )	
+	{
+		for ( int i = 0; i < 640; i++ )
+		{
+			summ = 0.0f;
+			for ( int dx = -2; dx < 3; dx++ )
+			{
+				summ += coeffs[dx+2]*in_out[ (j+dx)*640 + i ];
+				//summ += coeffs[dx+2]*( fabsf(in_out[ (j+dx)*640 + i ] - in_out[ j*640 + i ] ) > 10.0f  ? in_out[ j*640 + i ] : in_out[ (j+dx)*640 + i ] );
+			}
+			//tmp[ j*640 + i ] = (summ + tmp[ j*640 + i ])/2.0f;
+			tmp[ j*640 + i ]  = summ;
+		}
+	}	
+	//Y
+	for ( int j = 2; j < 478; j++ )
+	{
+		for ( int i = 2; i < 638; i++ )
+		{
+			summ = 0.0f;
+			for ( int dx = -2; dx < 3; dx++ )
+			{
+				summ += (coeffs[dx+2]*tmp[ j*640 + i +dx]);
+				//summ += coeffs[dx+2]*( fabsf(tmp[ j*640 + i +dx] - tmp[ j*640 + i ] ) > 10.0f  ? tmp[ j*640 + i ] : tmp[ j*640 + i +dx]);
+			}
+			in_out[ j*640 + i ] = summ;
+		}
+	}	
 }
 
 void KinectTool::DoToolUpdate()
@@ -22,9 +60,14 @@ void KinectTool::DoToolUpdate()
 	_reader->ProcessDepth();//both can be paralelized, but
 	//sync point here for process depth.
 	//memfence, in a way
-	_msh->UpdateDepth(_reader->GetDepth());
+	float* depth_ptr = _reader->GetDepth();//Flikers
+	//Blur.	
+	Blur( depth_ptr, _tmp_blured_image );//Makes it emen more flikering, but it should be done.
 	//memfence again
-	//or you can combine both calls into one ( basically same happens there )
+	_msh->UpdateDepth( depth_ptr );
+	//memfence again
+	//or you can combine both calls into one ( basically same happens there ), BUT with blur I see no way to do it.
+	//So the best way to parralelize it - SIMD-like paralelization inside of each function.
 }
 
 inline Point Rotate( const Point& v, const glm::quat& q )//looks to be fast.
@@ -54,10 +97,6 @@ inline Point Rotate( const Point& v, const glm::quat& q )//looks to be fast.
 	return res;
 }
 
-inline float interpolate( Point* points, int x, int y )
-{
-	
-}
 
 int KinectTool::InteractModel( GridModel* model, glm::quat quat )
 {
@@ -109,4 +148,5 @@ KinectTool::~KinectTool()
 {
 	delete _msh;
 	delete _reader;
+	delete _tmp_blured_image;
 }

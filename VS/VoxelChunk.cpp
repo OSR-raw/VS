@@ -35,13 +35,13 @@ void VoxelChunk::CreateGeometry()
 
 	for(int i = 0; i < size; i++)
     {
-		pnt.coord[0] = float(_lbl[0] + i)+0.5;
+		pnt.coord[0] = float(_lbl[0] + i)+0.5f;
 		for(int j = 0; j < size; j++)
 		{
-			pnt.coord[1] = float(_lbl[1] + j)+0.5;
+			pnt.coord[1] = float(_lbl[1] + j)+0.5f;
 			for( int k = 0; k < size; k++)
 			{
-				pnt.coord[2] = float(_lbl[2] + k)+0.5;
+				pnt.coord[2] = float(_lbl[2] + k)+0.5f;
 				index = i*size*size+j*size+k ;
 				_points[index] = pnt;
 				_colors[index] = __clr;
@@ -157,6 +157,13 @@ inline UINT8 VoxelChunk::EvaluateCell(  UINT8* m_pBlocks, unsigned int x, unsign
 	//front
 	if ( z == dimm-1  ||  m_pBlocks[ index + 1] == 0)
 		++res;
+
+	if ( res == 63 )
+	{
+		m_pBlocks[ index ] = 0;
+		return 0;
+	}
+
 
 	return res;
 }

@@ -24,11 +24,11 @@ int main( int argc, UINT8** argv)
 
 	GridModel* model = new GridModel(power);//power of 2
 
-	KinectTool* _tool = new KinectTool( (side*0.55), (side*0.55), side*.75, -(side*.5));
+	KinectTool* _tool = new KinectTool( (side*0.55f), (side*0.55f), side*.75f, -(side*.5f));
 
 	//glm::mat4 tmp_view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(side*1.0)));
 	//inp->SetViewM( tmp_view );
-	inp->SetZoom(-(side*1.5));
+	inp->SetZoom(-(side*1.5f));
 
 	//
 	Color clr;

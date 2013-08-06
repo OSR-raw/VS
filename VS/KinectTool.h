@@ -22,5 +22,6 @@ private:
 
 	TriangleMesh* _msh;
 	KinectReader* _reader;
+	float* _tmp_blured_image;
 };
 
