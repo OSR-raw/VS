@@ -42,7 +42,6 @@ void Render::SetupScene()
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-
 	shader = new Shader();
 	shader->loadFragmentShader("Shaders/shader.frag");
 	shader->loadGeometryShader("Shaders/shader.geom");
@@ -75,15 +74,19 @@ inline double diffclock( clock_t clock1, clock_t clock2 )
 
 void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, glm::mat4& obj )
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glm::mat4 pvm = projectionMatrix*view*obj;
-	//glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
 	clock_t start = clock();
+
+	glm::mat4 pvm = projectionMatrix*view*obj;
+
+	glDepthMask(GL_TRUE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+
 	int i = 0;
 	shader->bind();
 	glUniformMatrix4fv(pvmMatrixLocation, 1, GL_FALSE, &(pvm[0][0]));
-	glDisable(GL_BLEND);
+	
 	std::map< unsigned int, VAO* >* cells = model->GetRenderableCells();
 	std::map< unsigned int, VAO* >::iterator iter;
 	VAO* vao_ptr = NULL;
@@ -104,23 +107,14 @@ void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, 
 	glBindVertexArray(0);
 
 	shader->unbind();
-	//
-	/*
-	glm::mat4 tmp = glm::mat4(1.0f);
-	tmp[0] = obj._inverse()[0];
-	tmp[0].w = 0.0;
-	tmp[1] = obj._inverse()[1];
-	tmp[1].w = 0.0;
-	tmp[2] = obj._inverse()[2];
-	tmp[2].w = 0.0;
-	pvm = projectionMatrix*view*tmp;
-	*/
+	
 	pvm = projectionMatrix*view;
-	///
+
 	glDisable(GL_CULL_FACE);
-	//glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	glEnable(GL_BLEND);	
+	glDepthMask(GL_FALSE);
 	mesh_shader->bind();
+	
 	glUniformMatrix4fv(pvmLocMesh, 1, GL_FALSE, &(pvm[0][0]));
 	glBindVertexArray(_tool_mesh->GetVAO()->id());
 	glDrawElements(
@@ -128,7 +122,7 @@ void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, 
 			 _tool_mesh->GetVAO()->size(),    // count
 			 GL_UNSIGNED_INT,   // type
 			 (void*)0           // element array buffer offset
-		 );
+		 );	
 	glBindVertexArray(0);
 	mesh_shader->unbind();
 	
@@ -141,5 +135,5 @@ void Render::Resize(int w, int h)
 {
 	windowWidth = w;
 	windowHeight = h;
-	projectionMatrix = glm::perspective(30.0f, (float)windowWidth / (float)windowHeight, 0.01f, 1000.f);
+	projectionMatrix = glm::perspective(30.0f, (float)windowWidth / (float)windowHeight, 0.01f, 2048.f);
 }

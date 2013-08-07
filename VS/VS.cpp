@@ -23,11 +23,8 @@ int main( int argc, UINT8** argv)
 	unsigned int side = 1<<power;
 
 	GridModel* model = new GridModel(power);//power of 2
+	KinectTool* _tool = new KinectTool( (side*0.75f), (side*0.75f), side*.75f, -(side*.55f));
 
-	KinectTool* _tool = new KinectTool( (side*0.55f), (side*0.55f), side*.75f, -(side*.5f));
-
-	//glm::mat4 tmp_view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(side*1.0)));
-	//inp->SetViewM( tmp_view );
 	inp->SetZoom(-(side*1.5f));
 
 	//
@@ -46,34 +43,15 @@ int main( int argc, UINT8** argv)
 	model->UpdateCell(0,0,0, &clr);
 	//
 	
-	int ttt = 10;
-	int iter = 0;
-	clr.comp[0] = 0;
 	while (cntx->alive())
 	{
-		//iter++;
-		if ( iter == ttt )
-		{
 
-			for (  int i = side/2 -1; i < side; i++ )
-			{
-				for (  int j = 0; j < side; j++ )
-				{   
-					for (  int k = 0; k < side; k++ )
-					{
-						model->UpdateCell(i, j, k, &clr);
-					}
-				}
-			}
-		}
-
-
-
+		int acted = 0;
 		clock_t start = clock();
 
 		cntx->doMessage();		
 		_tool->DoToolUpdate();
-		int acted = _tool->InteractModel( model, inp->GetObjectQ());
+		acted = _tool->InteractModel( model, inp->GetObjectQ());
 		model->UpdateGrid();
 		cntx->renderScene(model, _tool->GetToolMesh(), inp->GetViewM(), inp->GetObjectM());
 

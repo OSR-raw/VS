@@ -21,7 +21,8 @@ KinectTool::KinectTool( float half_x, float half_y, float start_z, float end_z )
 
 inline void Blur( float* in_out, float* tmp )
 {
-	static double coeffs[] = {0.0545, 0.224, 0.4026, 0.224, 0.0545};
+	//static double coeffs[] = {0.0545, 0.224, 0.4026, 0.224, 0.0545};
+	static double coeffs[] = {1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0};
 	double summ = 0;
 	//X
 
@@ -114,23 +115,49 @@ int KinectTool::InteractModel( GridModel* model, glm::quat quat )
 	unsigned int grid_size = model->GetSize();
 	unsigned int grid_dimm = model->GetDimm() - 1;
 
+	unsigned int pad_depth = grid_dimm;
+
 	Color clr;
 	clr.comp[0] = 0;
 	clr.comp[1] = 0;
 	clr.comp[2] = 0;
 	clr.comp[3] = 0;
 	int accum = 0;
+	Point tmp;
+	Point dir_vector;
+	const float dir_z_step = 1.0f;
+	dir_vector.coord[0] = 0.0f;
+	dir_vector.coord[1] = 0.0f;
+	dir_vector.coord[2] = dir_z_step;
+	dir_vector = Rotate(dir_vector, inverse );
+	unsigned int tmp_pad = 0;
 	for ( unsigned int i = 0; i < 640; i++ )
 	{
 		for ( unsigned int j = 0; j < 480; j++ )
 		{
+			//tmp = points[ i*480 + j ];
+			//tmp.coord[2] -= dir_z_step*pad_depth;
 			action_point = Rotate( points[ i*480 + j ], inverse);
-			index = model->GetCellIndex(&action_point, tmp1, tmp2, tmp3);
+			for ( unsigned int delta = 0; delta < pad_depth; delta++ )
+			{
+				tmp.coord[0] = action_point.coord[0] + dir_vector.coord[0]*delta;
+				tmp.coord[1] = action_point.coord[1] + dir_vector.coord[1]*delta;
+				tmp.coord[2] = action_point.coord[2] + dir_vector.coord[2]*delta;
+				index = model->GetCellIndex(tmp, tmp1, tmp2, tmp3);
 
-			//if ( index < grid_size )
-			{				
-				if (!( ( tmp1 > grid_dimm ) || ( tmp2 > grid_dimm ) || ( tmp3 > grid_dimm )))
-					accum += model->UpdateCell(tmp1, tmp2, tmp3, &clr);
+				if ( index < grid_size )
+				{				
+					if (!( ( tmp1 > grid_dimm ) || ( tmp2 > grid_dimm ) || ( tmp3 > grid_dimm )))
+						accum += model->UpdateCell(tmp1, tmp2, tmp3, &clr);
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
 	}

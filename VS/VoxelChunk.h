@@ -24,7 +24,7 @@ public:
 	const Point& GetCenter();
 	bool IsDirty();
 	void MarkDirty();
-	UINT8 GetVoxelAlpha( unsigned int x, unsigned int y, unsigned int z );
+	UINT8 GetVoxelAlpha( unsigned int x, unsigned int y, unsigned int z ); // In alpha chanel we have 
 
 private:
 	void ClearMesh();

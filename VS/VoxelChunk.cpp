@@ -28,7 +28,7 @@ void VoxelChunk::CreateGeometry()
 	__clr.comp[0] = 255;
 	__clr.comp[1] = 255;
 	__clr.comp[2] = 255;
-	__clr.comp[3] = 255;
+	__clr.comp[3] = 0;
 
 	Point pnt;
 	unsigned int index = 0;
@@ -130,39 +130,39 @@ inline UINT8 VoxelChunk::EvaluateCell(  UINT8* m_pBlocks, unsigned int x, unsign
 	UINT8 res = 0;//Coding 00xxxxxx - where x is side
 
 	//top side:
-	if ( y == dimm-1 ||  m_pBlocks[ index +  dimm] == 0)
+	if ( (y == dimm-1) ||  m_pBlocks[ index +  dimm] == 0)
 		++res;
 	res = res<<1;
 
 	//Bottom
-	if ( y == 0 ||  m_pBlocks[ index -  dimm] == 0)
+	if ( (y == 0) ||  m_pBlocks[ index -  dimm] == 0)
 		 ++res;
 	res = res<<1;
 
 	//right
-	if ( x == dimm-1 ||  m_pBlocks[ index + dimm*dimm] == 0)
+	if ( (x == dimm-1) ||  m_pBlocks[ index + dimm*dimm] == 0)
 		++res;
 	res = res<<1;
 
 	//left
-	if ( x == 0 ||  m_pBlocks[ index - dimm*dimm] == 0)
+	if ( (x == 0) ||  m_pBlocks[ index - dimm*dimm] == 0)
 		++res;
 	res = res<<1;
 
 	//back
-	if ( z == 0||  m_pBlocks[ index - 1] == 0)
+	if ( (z == 0)||  m_pBlocks[ index - 1] == 0)
 		++res;
 	res = res<<1;
 
 	//front
-	if ( z == dimm-1  ||  m_pBlocks[ index + 1] == 0)
+	if ( (z == dimm-1)  ||  m_pBlocks[ index + 1] == 0)
 		++res;
 
-	if ( res == 63 )
-	{
-		m_pBlocks[ index ] = 0;
-		return 0;
-	}
+	//if ( res == 63 )// if cell has no neighbours - remove it. Hack, anyway. 
+	//{
+//		m_pBlocks[ index ] = 0;
+		//return 0;
+	//}
 
 
 	return res;
@@ -194,7 +194,7 @@ void VoxelChunk::ClearGeometry()
 
 	_points = NULL;
 	_colors = NULL;
-	_vertex_len = NULL;
+	_vertex_len = 0;
 	_indexes = NULL;
 	_renderable_indexes = NULL;
 }
@@ -216,6 +216,8 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 	if (_vao)
 		delete _vao;
 	_vao = new VAO();
+
+	_dirty = false;
 
 	Color clr;
 	clr.comp[0] = 255;
@@ -245,7 +247,7 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 					}
 
 					if (!_vbo)
-						_vbo = new VBO(_points, _colors, 0, _vertex_len );
+						_vbo = new VBO(_points, NULL, 0, _vertex_len );
 
 					global_index = ((_local_to_global_i+i)*dimm*dimm + (_local_to_global_j+j)*dimm + _local_to_global_k+k);
 					MapColor( &clr, m_pBlocks[global_index]);
@@ -274,8 +276,6 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 		}
 		ClearMesh();
 	}
-
-	_dirty = false;
 }
 
 VAO* VoxelChunk::GetVAO()

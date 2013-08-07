@@ -17,12 +17,12 @@ public:
 	unsigned int GetSize();
 	unsigned int GetDimm();
 	void UpdateGrid();
-	inline  unsigned int GetCellIndex( const Point* pos, unsigned int &x, unsigned int &y, unsigned int &z );
+	inline  unsigned int GetCellIndex( const Point& pos, unsigned int &x, unsigned int &y, unsigned int &z );
 	std::map< unsigned int, VAO* >* GetRenderableCells();
 private:
 	//GridCell* _cells;
 	unsigned int dimm;
-	float half_dimm;
+	int half_dimm;
 	unsigned int size;
 	
 	//std::map< unsigned int, RenderableCell* > _renderable_cells;
