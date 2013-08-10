@@ -8,7 +8,7 @@ GridModel::GridModel()
 	GridModel(128);
 }
 
-////
+/// Code to generate nice rock.
 float grad[12][3] = {
     {1.0,1.0,0.0},{-1.0,1.0,0.0},{1.0,-1.0,0.0},{-1.0,-1.0,0.0},
     {1.0,0.0,1.0},{-1.0,0.0,1.0},{1.0,0.0,-1.0},{-1.0,0.0,-1.0},
@@ -175,37 +175,35 @@ inline static void floating_rock(unsigned int x,unsigned int y,unsigned int z, U
 
 GridModel::GridModel( int power )
 {
-	//_renderable_cells.clear();
-
-	dimm = 1<<power;
-	size = dimm*dimm*dimm;
+	dimm = 1<<power; //grid dimension
+	size = dimm*dimm*dimm;//total size
 	half_dimm = dimm>>1;
-	_cells = new UINT8[size];
-	_interacted = new bool[size];
+	_cells = new UINT8[size];//cells - voxels.
+	_interacted = new bool[size];//array to store bool - if voxel was changed during this frame.
 	memset( _interacted, 0, size*sizeof(bool) );
 
 	power_for_chunk = min( unsigned(power-4), unsigned(4) );//chunk_size
 	unsigned int _chunk_power = power - power_for_chunk;
-	chunk_dimm = 1<<_chunk_power;
+	chunk_dimm = 1<<_chunk_power;//dimension for array of chunk
 	chunk_size = chunk_dimm*chunk_dimm*chunk_dimm;
 	_chunks = new VoxelChunk*[chunk_size];
 
-	internal_chunk_size = 1<<power_for_chunk;
+	internal_chunk_size = 1<<power_for_chunk;//internal chunk size, dimm == chunk_dimm*internal_chunk_size
 
-	Point center;
+	Point center;//center of voxel is always (+-xx.5, +-yy.5, +-zz.5)
 
 	int iter = 0;
 	unsigned int tmp1, tmp2, tmp3;
 	float radius = 0.0f;
 	for (  int i = 0; i < dimm; i++ )
 	{
-		center.coord[0] = float(i - int(dimm/2));
+		center.coord[0] = float(i - half_dimm);//well, but not here =)
 		for (  int j = 0; j < dimm; j++ )
 		{
-			center.coord[1] = float(j - int(dimm/2));
+			center.coord[1] = float(j - half_dimm);
 			for (  int k = 0; k < dimm; k++ )
 			{
-				center.coord[2] = float(k - int(dimm/2));
+				center.coord[2] = float(k - half_dimm);
 				iter = i*dimm*dimm+ j*dimm+ k;
 
 				_cells[iter] = 0;
@@ -227,7 +225,7 @@ GridModel::GridModel( int power )
 	for (  int i = 0; i < chunk_dimm; i++ )
 	{
 		tmp_lbl[0] = int(i<<power_for_chunk) - int(dimm/2);
-		center.coord[0] = float(tmp_lbl[0]) + _h_s;
+		center.coord[0] = float(tmp_lbl[0]) + _h_s;//but here it is
 		tmp_ufr[0] = tmp_lbl[0] + internal_chunk_size;
 		for (  int j = 0; j < chunk_dimm; j++ )
 		{
