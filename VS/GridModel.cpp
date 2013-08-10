@@ -352,15 +352,15 @@ int GridModel::UpdateCell( int i, int j, int k, UINT8 val )
 	
 		//If voxel is internal - do nothing.
 		UINT8 alpha =  ptr->GetVoxelAlpha( i - (i>>power_for_chunk)*internal_chunk_size,
-			j - (j>>power_for_chunk)*internal_chunk_size , k - (k>>power_for_chunk)*internal_chunk_size );
+			j - (j>>power_for_chunk)*internal_chunk_size , k - (k>>power_for_chunk)*internal_chunk_size );//local index in chunk.
 
 		if (  alpha == 0 )
 			return 0;
 	}
 
-	//_cells[i*dimm*dimm+ j*dimm+ k] = val;
-	_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 15 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 16 : 0;
-	_interacted[i*dimm*dimm+ j*dimm+ k] = true;
+	//_cells[i*dimm*dimm+ j*dimm+ k] = val;//set voxel
+	_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 15 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 16 : 0;//melt voxel.
+	_interacted[i*dimm*dimm+ j*dimm+ k] = true;//mark that voxel was interacted.
 
 	if ( !(ptr->IsDirty()) )
 	{
