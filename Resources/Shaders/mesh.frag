@@ -3,6 +3,7 @@
 
 in vec3 normal;
 in vec3 position;
+in float color_scale;
 
 #ifdef Lightning
 	vec3 light = vec3( 100, 100, -100 );
@@ -12,8 +13,8 @@ in vec3 position;
 layout(location = 0) out vec4 out_Color;
 void main(void)
 {
-    //out_Color = vec4(0.0,0.0,1.0,(128.0 - position.z)/128.0);
-	out_Color = vec4(0.0,0.0,1.0, 0.5);
+    out_Color = vec4(0.0,1.0,0.0,(-color_scale+ 1.0)/2.0);
+	//out_Color = vec4(0.0,0.0,1.0, 0.5);
 //return;
 #ifdef Lightning
 	{

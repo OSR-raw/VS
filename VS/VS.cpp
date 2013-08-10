@@ -3,7 +3,7 @@
 #include <time.h>
 #include "KinectTool.h"
 #include "TriangleMesh.h"
-
+#include "Soundify.h"
 
 inline double diffclock( clock_t clock1, clock_t clock2 ) 
 {
@@ -15,46 +15,54 @@ inline double diffclock( clock_t clock1, clock_t clock2 )
 
 int main( int argc, UINT8** argv) 
 {
-	GLContext* cntx = new GLContext();
-	Input* inp = new Input();
-	cntx->SetInput( inp );
+	GLContext* cntx = new GLContext();//Window+render.
+	Input* inp = new Input();//Input system.
+	cntx->SetInput( inp );//Context redirects mouse+keyb to Input
 
 	unsigned int power = 8;
-	unsigned int side = 1<<power;
 
 	GridModel* model = new GridModel(power);//power of 2
-	KinectTool* _tool = new KinectTool( (side*0.75f), (side*0.75f), side*.75f, -(side*.55f));
-
+	unsigned int side = model->GetDimm();
 	inp->SetZoom(-(side*1.5f));
+	inp->SetModel( model );
 
-	//
-	Color clr;
-	clr.comp[0] = 255;
-	clr.comp[1] = 255;
-	clr.comp[2] = 255;
-	clr.comp[3] = 255;
-	model->UpdateCell(side-1, side-1, side-1, &clr);
-	model->UpdateCell(side-1, side-1, 0, &clr);
-	model->UpdateCell(side-1, 0, side-1, &clr);
-	model->UpdateCell(0, side-1, side-1, &clr);
-	model->UpdateCell(0, 0, side-1, &clr);
-	model->UpdateCell(0, side-1, 0, &clr);
-	model->UpdateCell(side-1, 0, 0, &clr);
-	model->UpdateCell(0,0,0, &clr);
-	//
-	
+	KinectTool* tool = new KinectTool( (side*0.75f), (side*0.75f), side*.75f, -(side*.75f));
+
+	Soundify snd;
+	/*
+	Beep(659.26,200);
+    Beep(659.26,200);
+    Sleep(200);
+    Beep(659.26,200);
+    Sleep(100);
+    Beep(523.26,200);
+    Beep(659.26,200);
+    Sleep(200);
+    Beep(783.98,200);
+    Sleep(400);
+    Beep(391.99,200);
+	*/
+
+	int acted = 0;
+
 	while (cntx->alive())
-	{
-
-		int acted = 0;
+	{	
 		clock_t start = clock();
+		acted = 0;
 
-		cntx->doMessage();		
-		_tool->DoToolUpdate();
-		acted = _tool->InteractModel( model, inp->GetObjectQ());
+		inp->UpdateFrame();//Reset frame variables.
+		cntx->doMessage();//Win message loop
+
+
+		tool->DoToolUpdate();
+		acted = tool->InteractModel( model, inp->GetObjectQ());
+		
 		model->UpdateGrid();
-		cntx->renderScene(model, _tool->GetToolMesh(), inp->GetViewM(), inp->GetObjectM());
+		cntx->renderScene(model, tool, inp->GetViewM(), inp->GetObjectM());
 
+		//if (acted)
+		//	Beep(783.98,acted/1000+ 1);
+			//cout<<'\a'<<flush;
 		clock_t end = clock();
 		std::cout<<"Frame time = " << diffclock( end, start )<< " ms, " << "Interacted: "<< acted << std::endl;
 	}
@@ -62,7 +70,7 @@ int main( int argc, UINT8** argv)
 	delete model;
 	delete cntx;
 	delete inp;
-	delete _tool;
+	delete tool;
 	return 0;
 }
 

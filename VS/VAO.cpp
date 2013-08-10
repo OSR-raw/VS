@@ -19,7 +19,7 @@ unsigned int VAO::id()
 
 void VAO::bind ( const VBO& vbo)
 {
-	sz += vbo.size();
+	sz = vbo.size();
 	glBindVertexArray(vaoID[0]);	
 	vbo.bind(counter);
 	++counter;

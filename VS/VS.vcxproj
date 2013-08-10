@@ -167,6 +167,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Soundify.cpp" />
     <ClCompile Include="TriangleMesh.cpp" />
     <ClCompile Include="VoxelChunk.cpp" />
     <ClCompile Include="VAO.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="Render.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Soundify.h" />
     <ClInclude Include="TriangleMesh.h" />
     <ClInclude Include="VoxelChunk.h" />
     <ClInclude Include="VAO.h" />

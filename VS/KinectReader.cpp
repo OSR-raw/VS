@@ -16,7 +16,6 @@ KinectReader::KinectReader( unsigned int min_depth, unsigned int max_depth, floa
 	_min_depth = min_depth;
 	_max_depth = max_depth;
 	_active_depth = dist;
-
 }
 
 
@@ -91,7 +90,16 @@ HRESULT KinectReader::CreateFirstConnected()
 void KinectReader::ProcessDepth()
 {
 	if(!m_pNuiSensor)
+	{/*
+		int delta_depth =  _max_depth - _min_depth;
+		for ( unsigned int i = 0; i < 640*160; i++ )
+			m_depth[i] = (rand()%delta_depth - delta_depth)*0.15f;
+			*/
+
 		return;
+	}
+
+
     HRESULT hr;
     NUI_IMAGE_FRAME imageFrame;
 

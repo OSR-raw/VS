@@ -41,12 +41,11 @@ void EmitSide( vec4 pos, vec4 color, int start, vec4 transVerts[8], vec3 norm )
 {
 	for (int i=start;i<start+4; i++)
 	{
-		int v = cubeIndices[i];
-        gl_Position = transVerts[v];
+        gl_Position = transVerts[cubeIndices[i]];
         pass_Color = color;
 		//UV = vec2(0.0,0.0);
 		normal = norm;
-		position = position_vert[0];// + cubeVerts[v].xyz;
+		position = position_vert[0];
         EmitVertex();
 	}
 }
@@ -55,6 +54,7 @@ vec3 GetNormal( uint code )
 {
 	vec3 normal_ = vec3(0.0,0.0,0.0);
 	//is front
+	//normal_[2] = ( code%2 == 0 ) ? 1.0 : 0;
 	if ( code%2 == 0 )
 	{
 		normal_[2] += 1.0;

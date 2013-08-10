@@ -12,13 +12,14 @@ public:
 	GridModel( int power );
 
 	~GridModel();
-	int UpdateCell( int i, int j, int k, Color* clr );
+	int UpdateCell( int i, int j, int k, UINT8 val );
 	UINT8* GetCells();
 	unsigned int GetSize();
 	unsigned int GetDimm();
 	void UpdateGrid();
 	inline  unsigned int GetCellIndex( const Point& pos, unsigned int &x, unsigned int &y, unsigned int &z );
 	std::map< unsigned int, VAO* >* GetRenderableCells();
+	void ReInitModel();
 private:
 	//GridCell* _cells;
 	unsigned int dimm;
@@ -30,8 +31,10 @@ private:
 	inline bool EvaluateCell( unsigned int x, unsigned int y, unsigned int z );
 
 	UINT8* _cells;
+	bool* _interacted;
 	VoxelChunk** _chunks;
 	std::vector< VoxelChunk* > _dirty_chunks;
+	std::vector< VoxelChunk* > _modified_chunks;
 	std::map< unsigned int, VAO* > _renderable_chunks;
 	unsigned int chunk_dimm;
 	unsigned int chunk_size;

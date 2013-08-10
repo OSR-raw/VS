@@ -2,7 +2,8 @@
 #include "TriangleMesh.h"
 #include "KinectReader.h"
 #include "GridModel.h"
-
+#include "Shader.h"
+#include "GraphicsLib.h"
 
 KinectTool::KinectTool()
 {
@@ -14,30 +15,47 @@ KinectTool::KinectTool( float half_x, float half_y, float start_z, float end_z )
 	_start_z = start_z;
 	_end_z = end_z;
 	int start_d = 800;
-	_reader = new KinectReader(start_d, start_d+int(_start_z - _end_z), _start_z - _end_z );
+
+	_reader = new KinectReader(start_d, start_d+int(_start_z - _end_z)*2, _start_z - _end_z );
+
 	_tmp_blured_image = new float[640*480];
 	memset( _tmp_blured_image, 0, 640*480*sizeof(float) );
+
+	_tool_shader = new Shader();
+	_tool_shader->loadFragmentShader("Shaders/mesh.frag");
+	_tool_shader->loadGeometryShader("Shaders/mesh.geom");
+	_tool_shader->loadVertexShader("Shaders/mesh.vert");
+	_tool_shader->link();
+	pvmLocMesh = glGetUniformLocation(_tool_shader->id(), "pvm");
+
+}
+
+Shader* KinectTool::GetToolShader()
+{
+	return _tool_shader;
+}
+
+unsigned int KinectTool::GetPVMLocation()
+{
+	return pvmLocMesh;
 }
 
 inline void Blur( float* in_out, float* tmp )
 {
 	//static double coeffs[] = {0.0545, 0.224, 0.4026, 0.224, 0.0545};
-	static double coeffs[] = {1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0};
-	double summ = 0;
+	static float coeffs[] = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
+	float summ = 0;
 	//X
 
 	for ( int j = 2; j < 478; j++ )	
 	{
 		for ( int i = 0; i < 640; i++ )
 		{
-			summ = 0.0f;
+			tmp[ j*640 + i ] = 0.0f;
 			for ( int dx = -2; dx < 3; dx++ )
 			{
-				summ += coeffs[dx+2]*in_out[ (j+dx)*640 + i ];
-				//summ += coeffs[dx+2]*( fabsf(in_out[ (j+dx)*640 + i ] - in_out[ j*640 + i ] ) > 10.0f  ? in_out[ j*640 + i ] : in_out[ (j+dx)*640 + i ] );
+				tmp[ j*640 + i ] += coeffs[dx+2]*in_out[ (j+dx)*640 + i ];
 			}
-			//tmp[ j*640 + i ] = (summ + tmp[ j*640 + i ])/2.0f;
-			tmp[ j*640 + i ]  = summ;
 		}
 	}	
 	//Y
@@ -45,13 +63,11 @@ inline void Blur( float* in_out, float* tmp )
 	{
 		for ( int i = 2; i < 638; i++ )
 		{
-			summ = 0.0f;
+			in_out[ j*640 + i ] = 0.0f;
 			for ( int dx = -2; dx < 3; dx++ )
 			{
-				summ += (coeffs[dx+2]*tmp[ j*640 + i +dx]);
-				//summ += coeffs[dx+2]*( fabsf(tmp[ j*640 + i +dx] - tmp[ j*640 + i ] ) > 10.0f  ? tmp[ j*640 + i ] : tmp[ j*640 + i +dx]);
+				in_out[ j*640 + i ] += (coeffs[dx+2]*tmp[ j*640 + i +dx]);
 			}
-			in_out[ j*640 + i ] = summ;
 		}
 	}	
 }
@@ -104,24 +120,18 @@ int KinectTool::InteractModel( GridModel* model, glm::quat quat )
 	//for loop for each point, rotated by inverse of quat
 	Point* points = _msh->GetPoints();
 	glm::quat inverse = glm::conjugate(quat);
+	
 
-	//glm::vec3 rot(0, -90.0f*glm::pi<float>()/180.0, 0);
-	//glm::quat inverse =glm::quat(rot);
-
-
+	//Can be easy paralelized. With one but - UpdateCell should be treated properly - it's nor thead safe for moment.
 	Point action_point;
 	unsigned int index = 0;
 	unsigned int tmp1, tmp2, tmp3;
 	unsigned int grid_size = model->GetSize();
 	unsigned int grid_dimm = model->GetDimm() - 1;
 
-	unsigned int pad_depth = grid_dimm;
+	unsigned int pad_depth = 50;//grid_dimm;
 
-	Color clr;
-	clr.comp[0] = 0;
-	clr.comp[1] = 0;
-	clr.comp[2] = 0;
-	clr.comp[3] = 0;
+	UINT8 val = 0;
 	int accum = 0;
 	Point tmp;
 	Point dir_vector;
@@ -145,15 +155,9 @@ int KinectTool::InteractModel( GridModel* model, glm::quat quat )
 				tmp.coord[2] = action_point.coord[2] + dir_vector.coord[2]*delta;
 				index = model->GetCellIndex(tmp, tmp1, tmp2, tmp3);
 
-				if ( index < grid_size )
-				{				
-					if (!( ( tmp1 > grid_dimm ) || ( tmp2 > grid_dimm ) || ( tmp3 > grid_dimm )))
-						accum += model->UpdateCell(tmp1, tmp2, tmp3, &clr);
-					else
-					{
-						break;
-					}
-				}
+			
+				if (!( ( tmp1 > grid_dimm ) || ( tmp2 > grid_dimm ) || ( tmp3 > grid_dimm )))//if we are in model bounds
+					accum += model->UpdateCell(tmp1, tmp2, tmp3, val);
 				else
 				{
 					break;
@@ -175,5 +179,6 @@ KinectTool::~KinectTool()
 {
 	delete _msh;
 	delete _reader;
-	delete _tmp_blured_image;
+	delete [] _tmp_blured_image;
+	delete _tool_shader;
 }

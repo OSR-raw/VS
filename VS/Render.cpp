@@ -2,6 +2,7 @@
 #include "GraphicsLib.h"
 #include "GridModel.h"
 #include "VAO.h"
+#include "KinectTool.h"
 #include "TriangleMesh.h"
 #include <time.h>
 
@@ -26,9 +27,6 @@ Render::~Render()
 {
 	if (shader)
 		delete shader;
-
-	if (mesh_shader)
-		delete mesh_shader;
 }
 
 void Render::Init()
@@ -38,8 +36,8 @@ void Render::Init()
 
 void Render::SetupScene()
 {
-	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	shader = new Shader();
@@ -47,19 +45,8 @@ void Render::SetupScene()
 	shader->loadGeometryShader("Shaders/shader.geom");
 	shader->loadVertexShader("Shaders/shader.vert");
 	shader->link();
-
-	//mesh
-	mesh_shader = new Shader();
-	mesh_shader->loadFragmentShader("Shaders/mesh.frag");
-	mesh_shader->loadGeometryShader("Shaders/mesh.geom");
-	mesh_shader->loadVertexShader("Shaders/mesh.vert");
-	mesh_shader->link();
-
-	pvmLocMesh = glGetUniformLocation(mesh_shader->id(), "pvm");
-		
-	pvmMatrixLocation = glGetUniformLocation(shader->id(), "pvm");	
-	objLocation = glGetUniformLocation(shader->id(), "obj");
-	colorLocation = glGetUniformLocation(shader->id(), "color");
+			
+	pvmMatrixLocation = glGetUniformLocation(shader->id(), "pvm");
 	
 	projectionMatrix = glm::perspective(120.0f, (float)windowWidth / (float)windowHeight, 0.01f, 1000.f);
 }
@@ -72,7 +59,7 @@ inline double diffclock( clock_t clock1, clock_t clock2 )
     return diffms;
 }
 
-void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, glm::mat4& obj )
+void Render::Draw( GridModel* model, KinectTool* tool, glm::mat4& view, glm::mat4& obj )
 {
 	clock_t start = clock();
 
@@ -105,7 +92,6 @@ void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, 
 	}
 	
 	glBindVertexArray(0);
-
 	shader->unbind();
 	
 	pvm = projectionMatrix*view;
@@ -113,22 +99,24 @@ void Render::Draw( GridModel* model, TriangleMesh* _tool_mesh, glm::mat4& view, 
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);	
 	glDepthMask(GL_FALSE);
-	mesh_shader->bind();
+	vao_ptr = tool->GetToolMesh()->GetVAO();
+
+	tool->GetToolShader()->bind();	
+	glUniformMatrix4fv(tool->GetPVMLocation(), 1, GL_FALSE, &(pvm[0][0]));
 	
-	glUniformMatrix4fv(pvmLocMesh, 1, GL_FALSE, &(pvm[0][0]));
-	glBindVertexArray(_tool_mesh->GetVAO()->id());
+	glBindVertexArray(vao_ptr->id());
 	glDrawElements(
 			GL_TRIANGLES,      // mode
-			 _tool_mesh->GetVAO()->size(),    // count
+			 vao_ptr->size(),    // count
 			 GL_UNSIGNED_INT,   // type
 			 (void*)0           // element array buffer offset
 		 );	
 	glBindVertexArray(0);
-	mesh_shader->unbind();
+	tool->GetToolShader()->unbind();
 	
 	///
 	clock_t end = clock();
-	std::cout<<"For ticks = "<<i<<", tick time = " << diffclock( end, start )<< " ms" << std::endl;
+	//std::cout<<"For ticks = "<<i<<", tick time = " << diffclock( end, start )<< " ms" << std::endl;
 }
 
 void Render::Resize(int w, int h)

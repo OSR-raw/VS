@@ -173,7 +173,7 @@ UINT8 VoxelChunk::GetVoxelAlpha( unsigned int x, unsigned int y, unsigned int z 
 	return _colors ? _colors[  (x*size*size + y*size + z)  ].comp[3] : 0;
 }
 
-void VoxelChunk::SetColorForVoxel( unsigned int x, unsigned int y, unsigned int z, Color* clr )
+inline void VoxelChunk::SetColorForVoxel( unsigned int x, unsigned int y, unsigned int z, Color* clr )
 {
 	_colors[(x*size*size + y*size + z) ] = *clr;
 }
@@ -199,23 +199,21 @@ void VoxelChunk::ClearGeometry()
 	_renderable_indexes = NULL;
 }
 
-inline void MapColor( Color* clr, UINT8 val )
+inline void MapColor( Color* clr, UINT8 val, bool acted )
 {
-	//if ( val < 1.0 )
-		clr->comp[0] = clr->comp[1] = clr->comp[2] = val;
-	/*else
+	if ( acted )
 	{
-		clr->comp[0] = val;
-		clr->comp[1] = clr->comp[2] = 128;
-	}*/
+		clr->comp[0] = 255;
+		clr->comp[1] = clr->comp[2] = val;
+	}
+	else
+		clr->comp[0] = clr->comp[1] = clr->comp[2] = 255;
 }
 
-void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
+void VoxelChunk::CreateMesh( UINT8* m_pBlocks, bool* _acted, unsigned int dimm )//lower corner
 {
-	//ClearMesh();
-	if (_vao)
-		delete _vao;
-	_vao = new VAO();
+	if (!_vao)
+		_vao = new VAO();
 
 	_dirty = false;
 
@@ -232,10 +230,14 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 	unsigned int num_created = 0;
 	unsigned int global_index = 0;
 	UINT8 tmp_res = 0;
+	unsigned int x, y;
+
 	for (unsigned int i = 0; i < size; i++)
     {
+		x = (_local_to_global_i+i)*dimm*dimm;
         for (unsigned int j = 0; j < size; j++)
         {
+			y = (_local_to_global_j+j)*dimm;
             for (unsigned int k = 0; k < size; k++)
             {
 				tmp_res = EvaluateCell( m_pBlocks, _local_to_global_i+i, _local_to_global_j+j, _local_to_global_k+k, dimm );
@@ -249,8 +251,12 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 					if (!_vbo)
 						_vbo = new VBO(_points, NULL, 0, _vertex_len );
 
-					global_index = ((_local_to_global_i+i)*dimm*dimm + (_local_to_global_j+j)*dimm + _local_to_global_k+k);
-					MapColor( &clr, m_pBlocks[global_index]);
+					
+					global_index = ( x+ y + _local_to_global_k+k );;
+					//MapColor( &clr, m_pBlocks[global_index], false);
+					MapColor( &clr, m_pBlocks[global_index], _acted[global_index]);
+	
+					_acted[global_index] = false;
 					clr.comp[3] = tmp_res;
 					SetColorForVoxel(i, j, k, &clr);
 					_renderable_indexes[num_created] = i*size*size + j*size + k;
@@ -277,6 +283,42 @@ void VoxelChunk::CreateMesh( UINT8* m_pBlocks, unsigned int dimm )//lower corner
 		ClearMesh();
 	}
 }
+
+void VoxelChunk::RecalcColor( UINT8* voxels, unsigned int dimm )
+{
+	if ( !_vao )
+		return;
+	
+	Color clr;
+	int h_dimm = dimm>>1;
+	const int _local_to_global_i = h_dimm + _lbl[0];
+	const int _local_to_global_j = h_dimm + _lbl[1];
+	const int _local_to_global_k = h_dimm + _lbl[2];
+
+	unsigned int global_index = 0;
+
+	unsigned int x, y, index;
+
+	for (unsigned int i = 0; i < size; i++)
+    {
+		x = (_local_to_global_i+i)*dimm*dimm;
+        for (unsigned int j = 0; j < size; j++)
+        {
+			y = (_local_to_global_j+j)*dimm;
+            for (unsigned int k = 0; k < size; k++)
+            {
+				MapColor( &clr, voxels[x+ y + _local_to_global_k+k], false);
+				index = (i*size*size + j*size + k);
+				_colors[index].comp[0] = clr.comp[0];
+				_colors[index].comp[1] = clr.comp[1];
+				_colors[index].comp[2] = clr.comp[2];
+			}
+		}
+	}
+	_vbo->UpdateColorArray( _colors, _vertex_len );
+	_vao->bind( *_vbo );
+}
+
 
 VAO* VoxelChunk::GetVAO()
 {

@@ -6,6 +6,7 @@ class TriangleMesh;
 class KinectReader;
 class GridModel;
 class VAO;
+class Shader;
 
 class KinectTool
 {
@@ -15,7 +16,8 @@ public:
 	void DoToolUpdate();
 	int InteractModel( GridModel* model, glm::quat quat );
 	TriangleMesh* GetToolMesh();
-
+	Shader* GetToolShader();
+	unsigned int GetPVMLocation();
 private:
 	KinectTool();
 	float _start_z, _end_z;
@@ -23,5 +25,7 @@ private:
 	TriangleMesh* _msh;
 	KinectReader* _reader;
 	float* _tmp_blured_image;
+	Shader* _tool_shader;
+	int pvmLocMesh;	
 };
 

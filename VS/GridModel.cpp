@@ -170,7 +170,6 @@ inline static void floating_rock(unsigned int x,unsigned int y,unsigned int z, U
 		data[x*side*side + y*side + z] = density>3.1 ? 255 : 0;
 }
 
-
 ///
 
 
@@ -181,10 +180,12 @@ GridModel::GridModel( int power )
 	dimm = 1<<power;
 	size = dimm*dimm*dimm;
 	half_dimm = dimm>>1;
-	//_cells_1 = new VoxelBlock[size];	
 	_cells = new UINT8[size];
-	power_for_chunk = min( power-3, 4 );//chunk_size
-	unsigned int _chunk_power = power - power_for_chunk;	
+	_interacted = new bool[size];
+	memset( _interacted, 0, size*sizeof(bool) );
+
+	power_for_chunk = min( unsigned(power-4), unsigned(4) );//chunk_size
+	unsigned int _chunk_power = power - power_for_chunk;
 	chunk_dimm = 1<<_chunk_power;
 	chunk_size = chunk_dimm*chunk_dimm*chunk_dimm;
 	_chunks = new VoxelChunk*[chunk_size];
@@ -209,7 +210,7 @@ GridModel::GridModel( int power )
 
 				_cells[iter] = 0;
 				radius = sqrtf(  center.coord[0]*center.coord[0] + center.coord[1]*center.coord[1] + center.coord[2]*center.coord[2]);
-				if ( radius < dimm/2 - 1 )
+				//if ( radius < dimm/2 - 1 )
 					_cells[iter] = 255;
 				//floating_rock(i, j, k, _cells, dimm);
 				if ( iter != GetCellIndex(center, tmp1, tmp2, tmp3) )
@@ -248,6 +249,35 @@ GridModel::GridModel( int power )
 		}
 	}
 }
+
+
+void GridModel::ReInitModel()
+{
+	unsigned int iter;
+	for (  int i = 0; i < dimm; i++ )
+	{
+		for (  int j = 0; j < dimm; j++ )
+		{
+			for (  int k = 0; k < dimm; k++ )
+			{
+				iter = i*dimm*dimm+ j*dimm+ k;
+
+				_cells[iter] = 255;
+				_interacted[iter] = false;
+				//floating_rock(i, j, k, _cells, dimm);				
+			}
+		}
+	}
+
+	_dirty_chunks.clear();
+	_modified_chunks.clear();
+	for ( unsigned int i = 0; i < chunk_size; i++ )
+	{
+		_dirty_chunks.push_back(_chunks[i]);
+	}
+}
+
+
 unsigned int GridModel::GetDimm()
 {
 	return dimm;
@@ -265,17 +295,39 @@ inline  unsigned int GridModel::GetCellIndex( const Point& pos, unsigned int &x,
 
 void GridModel::UpdateGrid()
 {
-	unsigned int i = 0;
+	unsigned int i, j;
 	unsigned int index = 0;
 	unsigned int x,y,z;
+
+	bool not_dirty;
+	for( i = 0; i < _modified_chunks.size(); i++ )//bad
+	{
+		not_dirty = true;
+		for( j = 0; j < _dirty_chunks.size(); j++ )
+		{
+			if ( _dirty_chunks[j] == _modified_chunks[i] )
+			{
+				not_dirty = false;
+				break;
+			}
+		}
+
+		if (not_dirty)
+			_modified_chunks[i]->RecalcColor( _cells, dimm );
+	
+	}
+
+	_modified_chunks.clear();
+
 	for( i = 0; i < _dirty_chunks.size(); i++ )
 	{
 		index = GetCellIndex( (_dirty_chunks[i]->GetCenter() ), x, y, z);
 				
-		_dirty_chunks[i]->CreateMesh( _cells, dimm );
+		_dirty_chunks[i]->CreateMesh( _cells, _interacted, dimm );
 		if ( _dirty_chunks[i]->GetVAO() != NULL )// If mesh creating was successfull.
 		{
-			_renderable_chunks[index] = _dirty_chunks[i]->GetVAO();
+			_renderable_chunks[index] = _dirty_chunks[i]->GetVAO();			
+			_modified_chunks.push_back(_dirty_chunks[i]);
 		}
 		else
 			_renderable_chunks.erase( index );
@@ -284,16 +336,16 @@ void GridModel::UpdateGrid()
 	_dirty_chunks.clear();
 }
 
-int GridModel::UpdateCell( int i, int j, int k, Color* clr )
+int GridModel::UpdateCell( int i, int j, int k, UINT8 val )
 {
-	if ( _cells[i*dimm*dimm+ j*dimm+ k] == clr->comp[0] )
+	if ( _cells[i*dimm*dimm+ j*dimm+ k] == val )
 		return 0;
 
 	VoxelChunk* ptr = _chunks[ (i>>power_for_chunk)*chunk_dimm*chunk_dimm + (j>>power_for_chunk)*chunk_dimm + (k>>power_for_chunk) ];
 	
 	if (1)//if surface interaction.
 	{
-		/// If cell is internal - do nothing
+		/// If chunk is internal - do nothing
 		if ( ptr->GetVAO() == NULL )
 			return 0;
 
@@ -302,18 +354,21 @@ int GridModel::UpdateCell( int i, int j, int k, Color* clr )
 		UINT8 alpha =  ptr->GetVoxelAlpha( i - (i>>power_for_chunk)*internal_chunk_size,
 			j - (j>>power_for_chunk)*internal_chunk_size , k - (k>>power_for_chunk)*internal_chunk_size );
 
-		if (  alpha == 0)// || alpha == 63)
+		if (  alpha == 0 )
 			return 0;
 	}
-	_cells[i*dimm*dimm+ j*dimm+ k] = clr->comp[0];
-	//_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 4 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 5 : 0;
+
+	//_cells[i*dimm*dimm+ j*dimm+ k] = val;
+	_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 15 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 16 : 0;
+	_interacted[i*dimm*dimm+ j*dimm+ k] = true;
+
 	if ( !(ptr->IsDirty()) )
 	{
 		ptr->MarkDirty();
 		_dirty_chunks.push_back(ptr);
 	}
 	// + side chunks
-	//why not in the prev. if - you can modify one more cell at border of dirty chunk, su you have to update 
+	//why not in the prev. "if" - you can modify one more cell at border of dirty chunk, so you have to update 
 	//i
 	if ( i && (i%internal_chunk_size == 0) )
 	{
@@ -379,10 +434,12 @@ int GridModel::UpdateCell( int i, int j, int k, Color* clr )
 GridModel::~GridModel()
 {
 	delete [] _cells;
+
 	for ( int i = 0; i < chunk_dimm*chunk_dimm*chunk_dimm; i++ )
 		delete _chunks[i];
 
 	delete [] _chunks;
+	delete [] _interacted;
 }
 
 UINT8* GridModel::GetCells()
