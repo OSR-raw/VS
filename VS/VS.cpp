@@ -29,19 +29,7 @@ int main( int argc, UINT8** argv)
 	KinectTool* tool = new KinectTool( (side*0.75f), (side*0.75f), side*.75f, -(side*.75f));
 
 	Soundify snd;
-	/*
-	Beep(659.26,200);
-    Beep(659.26,200);
-    Sleep(200);
-    Beep(659.26,200);
-    Sleep(100);
-    Beep(523.26,200);
-    Beep(659.26,200);
-    Sleep(200);
-    Beep(783.98,200);
-    Sleep(400);
-    Beep(391.99,200);
-	*/
+	snd.Play();
 
 	int acted = 0;
 
@@ -59,14 +47,23 @@ int main( int argc, UINT8** argv)
 		
 		model->UpdateGrid();
 		cntx->renderScene(model, tool, inp->GetViewM(), inp->GetObjectM());
+		
+		if (acted)
+		{
+			snd.SetGain(1.0f);
+			snd.SetPitch( acted/1000.0f );
+		}
+		else
+		{
+			snd.SetGain(0.0f);
+		}
 
-		//if (acted)
-		//	Beep(783.98,acted/1000+ 1);
-			//cout<<'\a'<<flush;
 		clock_t end = clock();
 		std::cout<<"Frame time = " << diffclock( end, start )<< " ms, " << "Interacted: "<< acted << std::endl;
 	}
-	
+
+	snd.SetGain(0.0f);
+
 	delete model;
 	delete cntx;
 	delete inp;

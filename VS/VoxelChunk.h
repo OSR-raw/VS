@@ -4,7 +4,7 @@ This calss is wrapper for visual representation of some block of our voxelgrid. 
 it's a tradeoff - larger block is, more expencive update is.
 */
 #pragma once
-//#include "VoxelBlock.h"
+
 #include "main.h"
 class VAO;
 class VBO;
