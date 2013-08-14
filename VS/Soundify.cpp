@@ -29,7 +29,6 @@ Soundify::Soundify()
 void Soundify::SetPitch( float val )
 {
 	alSourcef(source, AL_PITCH, val);
-
 }
 
 
@@ -52,7 +51,6 @@ void Soundify::GenerateAudioData(double frequency, int seconds)
 	for (int i = 0; i < frames; i++)
 	{
 		audioData[i] = (short)(MaxValue * sin((2 * glm::pi<double>() * frequency) / sampleRate * i));
-		//std::cout<<audioData[i]<<" ";
 	}
 }
 

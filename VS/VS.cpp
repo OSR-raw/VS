@@ -42,16 +42,23 @@ int main( int argc, UINT8** argv)
 		cntx->doMessage();//Win message loop
 
 
-		tool->DoToolUpdate();
-		acted = tool->InteractModel( model, inp->GetObjectQ());
+		tool->DoToolUpdate();//update tool state - like depthmap
+		acted = tool->InteractModel( model, inp->GetObjectQ());//obvious
 		
-		model->UpdateGrid();
-		cntx->renderScene(model, tool, inp->GetViewM(), inp->GetObjectM());
+		model->UpdateGrid();// update visual representation of model
+		cntx->renderScene(model, tool, inp->GetViewM(), inp->GetObjectM());// do actual rendering.
 		
-		if (acted)
+		///
+		//static int tmp = 0;
+		//tmp++;
+		//acted = (rand()%100) > 10 ? (rand()%3000) : 0;
+		//acted = tmp;
+		///
+
+		if (acted)//sonification
 		{
 			snd.SetGain(1.0f);
-			snd.SetPitch( acted/1000.0f );
+			snd.SetPitch( 0.1 + acted/10000.0f );
 		}
 		else
 		{
@@ -65,9 +72,9 @@ int main( int argc, UINT8** argv)
 	snd.SetGain(0.0f);
 
 	delete model;
-	delete cntx;
 	delete inp;
 	delete tool;
+	delete cntx;
 	return 0;
 }
 
