@@ -341,7 +341,7 @@ int GridModel::UpdateCell( int i, int j, int k, UINT8 val )
 
 	VoxelChunk* ptr = _chunks[ (i>>power_for_chunk)*chunk_dimm*chunk_dimm + (j>>power_for_chunk)*chunk_dimm + (k>>power_for_chunk) ];
 	
-	if (1)//if surface interaction.
+	if (0)//if surface interaction.
 	{
 		/// If chunk is internal - do nothing
 		if ( ptr->GetVAO() == NULL )
@@ -357,7 +357,7 @@ int GridModel::UpdateCell( int i, int j, int k, UINT8 val )
 	}
 
 	//_cells[i*dimm*dimm+ j*dimm+ k] = val;//set voxel
-	_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 15 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 16 : 0;//melt voxel.
+	_cells[i*dimm*dimm+ j*dimm+ k] = ( _cells[i*dimm*dimm+ j*dimm+ k] > 127 ) ? _cells[i*dimm*dimm+ j*dimm+ k] - 128 : 0;//melt voxel.
 	_interacted[i*dimm*dimm+ j*dimm+ k] = true;//mark that voxel was interacted.
 
 	if ( !(ptr->IsDirty()) )

@@ -47,7 +47,6 @@ LRESULT CALLBACK GLContext::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 	switch (message) {
 		case WM_SIZE: // If our window is resizing
 		{
-			glViewport(0, 0, LOWORD(lParam), HIWORD(lParam));
 			pWnd->Resize(LOWORD(lParam), HIWORD(lParam)); // Send the new window size to our OGLWidget
 			break;
 		}
@@ -94,7 +93,7 @@ bool GLContext::create30Context()
 	PIXELFORMATDESCRIPTOR pfd;
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR)); 
 	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW;
+	pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_SUPPORT_OPENGL;// | PFD_DRAW_TO_WINDOW;
 	pfd.iPixelType = PFD_TYPE_RGBA;
 	pfd.cColorBits = 32;
 	pfd.cDepthBits = 32;

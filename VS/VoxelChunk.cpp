@@ -203,8 +203,9 @@ inline void MapColor( Color* clr, UINT8 val, bool acted )
 {
 	if ( acted )
 	{
+		clr->comp[1] = 255;
 		clr->comp[0] = 255;
-		clr->comp[1] = clr->comp[2] = val;
+		clr->comp[2] = val;
 	}
 	else
 		clr->comp[0] = clr->comp[1] = clr->comp[2] = 255;

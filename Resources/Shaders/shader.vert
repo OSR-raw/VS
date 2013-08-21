@@ -1,14 +1,13 @@
 #version 410 core
 
-in vec3 in_Position;
-in vec4 in_Color;
-in vec2 in_UV;
-in vec3 in_Normal;
+layout(location = 0) in vec3 in_Position;
+layout(location = 1) in vec4 in_Color;
+layout(location = 2) in vec2 in_UV;
+layout(location = 3) in vec3 in_Normal;
 
-out vec4 pass_Color_vert;
-
-out vec3 normal_vert;
-out vec3 position_vert;
+layout(location = 0) out vec4 pass_Color_vert;
+layout(location = 1) out vec3 normal_vert;
+layout(location = 2) out vec3 position_vert;
 
 void main(void)
 {

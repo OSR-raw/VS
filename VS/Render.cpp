@@ -121,6 +121,7 @@ void Render::Draw( GridModel* model, KinectTool* tool, glm::mat4& view, glm::mat
 
 void Render::Resize(int w, int h)
 {
+	glViewport(0, 0, w,  h);
 	windowWidth = w;
 	windowHeight = h;
 	projectionMatrix = glm::perspective(30.0f, (float)windowWidth / (float)windowHeight, 0.01f, 2048.f);

@@ -46,30 +46,30 @@ inline void Blur( float* in_out, float* tmp )
 	static float coeffs[] = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
 	float summ = 0;
 	//X
-
-	for ( int j = 2; j < 478; j++ )	
+	int i,j,dx;
+	for ( j = 2; j < 478; j++ )	
 	{
-		for ( int i = 0; i < 640; i++ )
+		for ( i = 0; i < 640; i++ )
 		{
 			tmp[ j*640 + i ] = 0.0f;
-			for ( int dx = -2; dx < 3; dx++ )
+			for ( dx = -2; dx < 3; dx++ )
 			{
 				tmp[ j*640 + i ] += coeffs[dx+2]*in_out[ (j+dx)*640 + i ];
 			}
 		}
 	}	
 	//Y
-	for ( int j = 2; j < 478; j++ )
+	for ( j = 2; j < 478; j++ )
 	{
-		for ( int i = 2; i < 638; i++ )
+		for ( i = 2; i < 638; i++ )
 		{
 			in_out[ j*640 + i ] = 0.0f;
-			for ( int dx = -2; dx < 3; dx++ )
+			for ( dx = -2; dx < 3; dx++ )
 			{
 				in_out[ j*640 + i ] += (coeffs[dx+2]*tmp[ j*640 + i +dx]);
 			}
 		}
-	}	
+	}
 }
 
 void KinectTool::DoToolUpdate()

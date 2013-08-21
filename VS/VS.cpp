@@ -23,7 +23,7 @@ int main( int argc, UINT8** argv)
 
 	GridModel* model = new GridModel(power);//power of 2
 	unsigned int side = model->GetDimm();
-	inp->SetZoom(-(side*1.5f));
+	inp->SetZoom(-(side*4.0f));
 	inp->SetModel( model );
 
 	KinectTool* tool = new KinectTool( (side*0.75f), (side*0.75f), side*.75f, -(side*.75f));
@@ -58,7 +58,7 @@ int main( int argc, UINT8** argv)
 		if (acted)//sonification
 		{
 			snd.SetGain(1.0f);
-			snd.SetPitch( 0.1 + acted/10000.0f );
+			snd.SetPitch( 0.1 + glm::log2(acted*1.0f)/1000.0f );
 		}
 		else
 		{

@@ -9,7 +9,7 @@ in vec3 position_vert[];
 
 out vec3 normal;
 out vec3 position;
-out float color_scale;
+out vec4 in_color;
 
 void main()
 {
@@ -28,7 +28,7 @@ void main()
 	{
 		gl_Position = pvm*(gl_in[i].gl_Position);
 		normal = nrm;
-		color_scale = gl_in[i].gl_Position.z/near_depth;
+		in_color = vec4(0.0,1.0,0.0,(-gl_in[i].gl_Position.z/near_depth+ 1.0)/2.0);
 		position = position_vert[i];
 		EmitVertex();
 	}
@@ -37,6 +37,7 @@ void main()
 	{
 		gl_Position = pvm*vec4(gl_in[i].gl_Position.x, -near_depth, gl_in[i].gl_Position.z, 1.0);
 		normal = nrm;
+		in_color = vec4(0.0,1.0,0.0,1.0);
 		position = position_vert[i];
 		EmitVertex();
 	}
